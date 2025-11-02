@@ -15,18 +15,39 @@ export default function Projects() {
   const { t } = useTranslation();
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
-  const month = searchParams.get('month') || new Date().getMonth() + 1;
-  const year = searchParams.get('year') || new Date().getFullYear();
-  const date = searchParams.get('date');
+  const dateParam = searchParams.get('date');
+  const monthParam = searchParams.get('month');
+  const yearParam = searchParams.get('year');
+
+  // Extract month/year from date if date is provided, otherwise use params or current date
+  let month, year, date;
+  if (dateParam) {
+    const dateObj = new Date(dateParam);
+    month = dateObj.getMonth() + 1;
+    year = dateObj.getFullYear();
+    date = dateParam;
+  } else {
+    month = monthParam ? parseInt(monthParam) : new Date().getMonth() + 1;
+    year = yearParam ? parseInt(yearParam) : new Date().getFullYear();
+    date = null;
+  }
 
   useEffect(() => {
     fetchProjects();
-  }, [month, year]);
+  }, [month, year, date]);
 
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/projects/?month=${month}&year=${year}`);
+      // Build API URL - if date is specified, use it; otherwise use month/year
+      let apiUrl;
+      if (date) {
+        apiUrl = `/projects/?date=${date}`;
+      } else {
+        apiUrl = `/projects/?month=${month}&year=${year}`;
+      }
+
+      const response = await api.get(apiUrl);
       setProjects(response.data.results || response.data);
     } catch (error) {
       console.error('Error fetching projects:', error);
@@ -90,7 +111,10 @@ export default function Projects() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">{t('projects.title')}</h1>
           <p className="mt-1 text-sm text-gray-600">
-            {month}/{year} - {projects.length} {t('projects.title').toLowerCase()}{projects.length !== 1 ? 's' : ''}
+            {date
+              ? new Date(date).toLocaleDateString() + ' - ' + projects.length + ' ' + t('projects.title').toLowerCase() + (projects.length !== 1 ? 's' : '')
+              : `${month}/${year} - ${projects.length} ${t('projects.title').toLowerCase()}${projects.length !== 1 ? 's' : ''}`
+            }
           </p>
         </div>
         <button onClick={openCreateModal} className="btn-primary flex items-center">
