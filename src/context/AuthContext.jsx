@@ -73,6 +73,14 @@ export const AuthProvider = ({ children }) => {
       if (response.data.success) {
         setIsAuthenticated(true);
         localStorage.setItem('isAuthenticated', 'true');
+
+        // Ensure CSRF token is fetched after login
+        try {
+          await api.get('/login/');
+        } catch (e) {
+          // Ignore - we just need CSRF cookie to be set
+        }
+
         return { success: true };
       } else {
         return { success: false, error: response.data.error || 'Invalid credentials' };

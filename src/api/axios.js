@@ -42,18 +42,17 @@ async function ensureCsrfToken() {
     }
 
     try {
-      // Try to get CSRF token from API login endpoint
-      const response = await axios.get('/login/', {
-        withCredentials: true,
-      });
+      // Try to get CSRF token from API login endpoint (GET request)
+      const response = await api.get('/login/');
       token = response.data.csrf_token || getCookie('csrftoken');
     } catch (error) {
-      // Fallback: try to get from base URL
+      // If that fails, try the admin login page endpoint
       try {
-        await axios.get(
-          import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://127.0.0.1:8000',
-          { withCredentials: true }
-        );
+        const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:8000';
+        await fetch(`${baseUrl}/admin/login/`, {
+          method: 'GET',
+          credentials: 'include',
+        });
         token = getCookie('csrftoken');
       } catch (e) {
         console.warn('Could not fetch CSRF token:', e);
@@ -69,18 +68,25 @@ async function ensureCsrfToken() {
 // Request interceptor to add CSRF token
 api.interceptors.request.use(
   async (config) => {
-    // Get CSRF token from cookie first
-    let csrfToken = getCookie('csrftoken');
+    // For state-changing methods, ensure we have CSRF token
+    if (config.method === 'post' || config.method === 'put' || config.method === 'delete' || config.method === 'patch') {
+      // Get CSRF token from cookie first
+      let csrfToken = getCookie('csrftoken');
 
-    // If no CSRF token and it's a state-changing method, fetch it
-    if (!csrfToken && (config.method === 'post' || config.method === 'put' || config.method === 'delete' || config.method === 'patch')) {
-      csrfToken = await ensureCsrfToken();
-      csrfTokenPromise = null; // Reset promise for next time
-    }
+      // If no token in cookie, fetch it
+      if (!csrfToken) {
+        try {
+          csrfTokenPromise = null; // Reset to force new fetch
+          csrfToken = await ensureCsrfToken();
+        } catch (error) {
+          console.warn('Could not fetch CSRF token:', error);
+        }
+      }
 
-    // Add CSRF token to headers for state-changing methods
-    if (csrfToken && (config.method === 'post' || config.method === 'put' || config.method === 'delete' || config.method === 'patch')) {
-      config.headers['X-CSRFToken'] = csrfToken;
+      // Add CSRF token to headers
+      if (csrfToken) {
+        config.headers['X-CSRFToken'] = csrfToken;
+      }
     }
 
     return config;
@@ -104,12 +110,9 @@ api.interceptors.response.use(
       // If it's a CSRF error, try to get token and retry
       if (errorDetail.includes('CSRF') || !errorDetail.includes('credentials')) {
         try {
-          // Fetch CSRF token
-          await axios.get(
-            import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://127.0.0.1:8000',
-            { withCredentials: true }
-          );
-          const csrfToken = getCookie('csrftoken');
+          // Fetch CSRF token from login endpoint
+          const response = await api.get('/login/');
+          const csrfToken = response.data.csrf_token || getCookie('csrftoken');
 
           // Retry the original request with CSRF token
           if (csrfToken && error.config) {
