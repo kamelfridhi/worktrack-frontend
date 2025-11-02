@@ -93,7 +93,7 @@ export default function EmployeeDetails() {
   }) || [];
 
   return (
-    <div className="p-6">
+    <div className="p-4 md:p-6">
       <button
         onClick={() => navigate('/employees')}
         className="mb-4 flex items-center text-gray-600 hover:text-gray-900"
@@ -103,46 +103,47 @@ export default function EmployeeDetails() {
       </button>
 
       <div className="card mb-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-4 sm:space-y-0">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 break-words">
               {employee.first_name} {employee.last_name}
             </h1>
-            <p className="text-gray-600 mb-1">{t('employeeDetails.role')}: {employee.role}</p>
-            <p className="text-gray-600 mb-1">{t('employeeDetails.phone')}: {employee.phone_number}</p>
+            <p className="text-gray-600 mb-1 break-words">{t('employeeDetails.role')}: {employee.role}</p>
+            <p className="text-gray-600 mb-1 break-words">{t('employeeDetails.phone')}: {employee.phone_number}</p>
             {employee.hourly_rate && (
-              <p className="text-gray-600 mb-4">
-                {t('employeeDetails.hourlyRate')}: ${parseFloat(employee.hourly_rate).toFixed(2)}
+              <p className="text-gray-600 mb-4 break-words">
+                {t('employeeDetails.hourlyRate')}: €{parseFloat(employee.hourly_rate).toFixed(2)}
               </p>
             )}
           </div>
           <button
             onClick={downloadPDF}
             disabled={downloading}
-            className="btn-primary flex items-center disabled:opacity-50"
+            className="btn-primary flex items-center justify-center w-full sm:w-auto disabled:opacity-50 flex-shrink-0"
           >
             <DocumentArrowDownIcon className="h-5 w-5 mr-2" />
-            {downloading ? t('employeeDetails.downloading') : t('employeeDetails.downloadMonthlyReport')}
+            <span className="hidden sm:inline">{downloading ? t('employeeDetails.downloading') : t('employeeDetails.downloadMonthlyReport')}</span>
+            <span className="sm:hidden">{downloading ? t('employeeDetails.downloading') : t('employeeDetails.download')}</span>
           </button>
         </div>
       </div>
 
       <div className="card mb-6">
-        <h2 className="text-xl font-semibold mb-4">{t('employeeDetails.thisMonthSummary')}</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <h2 className="text-lg md:text-xl font-semibold mb-4">{t('employeeDetails.thisMonthSummary')}</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <div className="bg-blue-50 p-4 rounded-lg">
             <p className="text-sm text-gray-600">{t('employeeDetails.totalHours')}</p>
-            <p className="text-2xl font-bold text-blue-600">{totalHoursThisMonth.toFixed(2)}</p>
+            <p className="text-xl md:text-2xl font-bold text-blue-600">{totalHoursThisMonth.toFixed(2)}</p>
           </div>
           <div className="bg-green-50 p-4 rounded-lg">
             <p className="text-sm text-gray-600">{t('employeeDetails.projects')}</p>
-            <p className="text-2xl font-bold text-green-600">{currentMonthProjects.length}</p>
+            <p className="text-xl md:text-2xl font-bold text-green-600">{currentMonthProjects.length}</p>
           </div>
           {employee.hourly_rate && (
-            <div className="bg-purple-50 p-4 rounded-lg">
+            <div className="bg-purple-50 p-4 rounded-lg sm:col-span-2 md:col-span-1">
               <p className="text-sm text-gray-600">{t('employeeDetails.estimatedEarnings')}</p>
-              <p className="text-2xl font-bold text-purple-600">
-                ${(totalHoursThisMonth * parseFloat(employee.hourly_rate)).toFixed(2)}
+              <p className="text-xl md:text-2xl font-bold text-purple-600">
+                €{(totalHoursThisMonth * parseFloat(employee.hourly_rate)).toFixed(2)}
               </p>
             </div>
           )}
@@ -150,58 +151,96 @@ export default function EmployeeDetails() {
       </div>
 
       <div className="card">
-        <h2 className="text-xl font-semibold mb-4">{t('employeeDetails.projectsWorkedOn')}</h2>
+        <h2 className="text-lg md:text-xl font-semibold mb-4">{t('employeeDetails.projectsWorkedOn')}</h2>
         {employee.employee_projects?.length === 0 ? (
           <p className="text-gray-500 text-center py-8">{t('employeeDetails.noProjects')}</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('employeeDetails.project')}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('employeeDetails.date')}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('employeeDetails.hoursWorked')}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('projectDetails.actions')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {employee.employee_projects?.map((ep) => (
-                  <tr key={ep.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div
-                        className="text-sm font-medium text-blue-600 cursor-pointer hover:underline"
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto -mx-6 md:mx-0">
+              <div className="inline-block min-w-full align-middle">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {t('employeeDetails.project')}
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {t('employeeDetails.date')}
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {t('employeeDetails.hoursWorked')}
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {t('projectDetails.actions')}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {employee.employee_projects?.map((ep) => (
+                      <tr key={ep.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div
+                            className="text-sm font-medium text-blue-600 cursor-pointer hover:underline"
+                            onClick={() => navigate(`/projects/${ep.project_id}`)}
+                          >
+                            {ep.project_name}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {new Date(ep.project_date).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {ep.hours_worked} {t('employeeDetails.hours')}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <button
+                            onClick={() => navigate(`/projects/${ep.project_id}`)}
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            {t('employeeDetails.viewProject')}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-4">
+              {employee.employee_projects?.map((ep) => (
+                <div key={ep.id} className="border border-gray-200 rounded-lg p-4 bg-white">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1 min-w-0">
+                      <h3
+                        className="text-sm font-semibold text-blue-600 cursor-pointer hover:underline truncate"
                         onClick={() => navigate(`/projects/${ep.project_id}`)}
                       >
                         {ep.project_name}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(ep.project_date).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {ep.hours_worked} {t('employeeDetails.hours')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <button
-                        onClick={() => navigate(`/projects/${ep.project_id}`)}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        {t('employeeDetails.viewProject')}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {new Date(ep.project_date).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                    <span className="text-sm text-gray-600">{t('employeeDetails.hoursWorked')}:</span>
+                    <span className="text-sm font-medium text-gray-900">{ep.hours_worked} {t('employeeDetails.hours')}</span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <button
+                      onClick={() => navigate(`/projects/${ep.project_id}`)}
+                      className="w-full btn-secondary text-sm py-2"
+                    >
+                      {t('employeeDetails.viewProject')}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
