@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(true);
         localStorage.setItem('isAuthenticated', 'true');
 
-        // Ensure CSRF token is fetched after login
+        // Ensure CSRF token is available for subsequent requests
         try {
           await api.get('/login/');
         } catch (e) {

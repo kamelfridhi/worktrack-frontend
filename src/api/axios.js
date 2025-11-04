@@ -107,8 +107,8 @@ api.interceptors.response.use(
     if (error.response?.status === 403) {
       const errorDetail = error.response?.data?.detail || '';
 
-      // If it's a CSRF error, try to get token and retry
-      if (errorDetail.includes('CSRF') || !errorDetail.includes('credentials')) {
+      // If it's a CSRF error (not an auth credentials error), try to get token and retry
+      if (errorDetail.includes('CSRF')) {
         try {
           // Fetch CSRF token from login endpoint
           const response = await api.get('/login/');
@@ -121,6 +121,17 @@ api.interceptors.response.use(
           }
         } catch (retryError) {
           console.error('Failed to retry request:', retryError);
+        }
+      }
+
+      // If it's an authentication credentials error, the session cookie might not be set
+      // This usually means the user needs to log in again
+      if (errorDetail.includes('Authentication credentials') || errorDetail.includes('credentials')) {
+        console.warn('Session cookie not found or invalid. User may need to log in again.');
+        // Clear auth state and redirect to login if not already there
+        localStorage.removeItem('isAuthenticated');
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
         }
       }
     }
