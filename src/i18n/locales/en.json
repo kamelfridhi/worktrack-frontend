@@ -106,7 +106,9 @@
     "viewProject": "View Project",
     "unauthorized": "You are not authorized to download this report. Please log in again.",
     "downloadError": "Error downloading PDF. Please try again.",
-    "hours": "hours"
+    "hours": "hours",
+    "summary": "Summary",
+    "noProjectsForMonth": "No projects found for {{month}} {{year}}"
   },
   "reports": {
     "title": "Reports & Statistics",
@@ -134,7 +136,17 @@
     "close": "Close",
     "confirm": "Are you sure?",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "search": "Search",
+    "allRoles": "All Roles",
+    "clear": "Clear",
+    "showing": "Showing",
+    "of": "of",
+    "noResults": "No results found",
+    "tryDifferentSearch": "Try a different search or filter",
+    "actions": "Actions",
+    "optional": "Optional",
+    "allMonths": "All Months"
   },
   "months": {
     "1": "January",

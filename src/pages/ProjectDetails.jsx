@@ -45,17 +45,22 @@ export default function ProjectDetails() {
 
   const onSubmitHours = async (data) => {
     try {
+      // Handle empty hours_worked - default to 0 if not provided
+      const hoursWorked = data.hours_worked !== undefined && data.hours_worked !== null && data.hours_worked !== ''
+        ? parseFloat(data.hours_worked)
+        : 0;
+
       if (editingHours) {
         await api.put(`/employeeprojects/${editingHours.id}/`, {
           employee: editingHours.employee_id,
           project: parseInt(id),
-          hours_worked: parseFloat(data.hours_worked),
+          hours_worked: hoursWorked,
         });
       } else {
         await api.post('/employeeprojects/', {
           employee: parseInt(data.employee),
           project: parseInt(id),
-          hours_worked: parseFloat(data.hours_worked),
+          hours_worked: hoursWorked,
         });
       }
       setShowAddModal(false);
@@ -173,7 +178,7 @@ export default function ProjectDetails() {
                           {ep.employee_phone_number}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {ep.hours_worked} {t('employeeDetails.hours')}
+                          {ep.hours_worked || 0} {t('employeeDetails.hours')}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button
@@ -224,7 +229,7 @@ export default function ProjectDetails() {
                   </div>
                   <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                     <span className="text-sm text-gray-600">{t('projectDetails.hoursWorked')}:</span>
-                    <span className="text-sm font-medium text-gray-900">{ep.hours_worked} {t('employeeDetails.hours')}</span>
+                    <span className="text-sm font-medium text-gray-900">{ep.hours_worked || 0} {t('employeeDetails.hours')}</span>
                   </div>
                 </div>
               ))}
@@ -260,15 +265,16 @@ export default function ProjectDetails() {
               </div>
 
               <div>
-                <label className="label">{t('projectDetails.hoursWorked')}</label>
+                <label className="label">{t('projectDetails.hoursWorked')} ({t('common.optional') || 'Optional'})</label>
                 <input
                   {...register('hours_worked', {
-                    required: t('projectDetails.hoursWorked') + ' ' + t('projects.required'),
-                    min: { value: 0.1, message: t('projectDetails.minHours') },
+                    min: { value: 0, message: t('projectDetails.minHours') || 'Hours must be 0 or greater' },
                   })}
                   type="number"
                   step="0.1"
+                  min="0"
                   className="input-field"
+                  placeholder="0"
                 />
                 {errors.hours_worked && (
                   <p className="mt-1 text-sm text-red-600">{errors.hours_worked.message}</p>

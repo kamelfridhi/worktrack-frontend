@@ -1,15 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import api from '../api/axios';
-import { PencilIcon, TrashIcon, PlusIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, TrashIcon, PlusIcon, CalendarIcon, MagnifyingGlassIcon, FunnelIcon } from '@heroicons/react/24/outline';
 
 export default function Projects() {
   const [projects, setProjects] = useState([]);
+  const [allProjects, setAllProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterDate, setFilterDate] = useState('');
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -48,13 +51,36 @@ export default function Projects() {
       }
 
       const response = await api.get(apiUrl);
-      setProjects(response.data.results || response.data);
+      const fetchedProjects = response.data.results || response.data;
+      setAllProjects(fetchedProjects);
+      setProjects(fetchedProjects);
     } catch (error) {
       console.error('Error fetching projects:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  // Filter and search projects
+  const filteredProjects = useMemo(() => {
+    let filtered = [...allProjects];
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(project =>
+        project.name?.toLowerCase().includes(query) ||
+        project.description?.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply date filter
+    if (filterDate) {
+      filtered = filtered.filter(project => project.date === filterDate);
+    }
+
+    return filtered;
+  }, [allProjects, searchQuery, filterDate]);
 
   const onSubmit = async (data) => {
     try {
@@ -112,8 +138,8 @@ export default function Projects() {
           <h1 className="text-3xl font-bold text-gray-900">{t('projects.title')}</h1>
           <p className="mt-1 text-sm text-gray-600">
             {date
-              ? new Date(date).toLocaleDateString() + ' - ' + projects.length + ' ' + t('projects.title').toLowerCase() + (projects.length !== 1 ? 's' : '')
-              : `${month}/${year} - ${projects.length} ${t('projects.title').toLowerCase()}${projects.length !== 1 ? 's' : ''}`
+              ? new Date(date).toLocaleDateString() + ' - ' + filteredProjects.length + ' ' + t('projects.title').toLowerCase() + (filteredProjects.length !== 1 ? 's' : '')
+              : `${month}/${year} - ${filteredProjects.length} ${t('projects.title').toLowerCase()}${filteredProjects.length !== 1 ? 's' : ''}`
             }
           </p>
         </div>
@@ -123,63 +149,145 @@ export default function Projects() {
         </button>
       </div>
 
+      {/* Search and Filter Bar */}
+      <div className="mb-6 bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Search Bar */}
+          <div className="flex-1 relative">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder={t('common.search') || 'Search projects...'}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+            />
+          </div>
+          {/* Date Filter */}
+          <div className="flex items-center gap-2">
+            <FunnelIcon className="h-5 w-5 text-gray-400" />
+            <input
+              type="date"
+              value={filterDate}
+              onChange={(e) => setFilterDate(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+            />
+            {filterDate && (
+              <button
+                onClick={() => setFilterDate('')}
+                className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900"
+              >
+                {t('common.clear') || 'Clear'}
+              </button>
+            )}
+          </div>
+        </div>
+        {filteredProjects.length !== allProjects.length && (
+          <p className="mt-2 text-sm text-gray-600">
+            {t('common.showing') || 'Showing'} {filteredProjects.length} {t('common.of') || 'of'} {allProjects.length} {t('projects.title').toLowerCase()}
+          </p>
+        )}
+      </div>
+
       {loading ? (
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
-      ) : projects.length === 0 ? (
-        <div className="text-center py-12">
+      ) : filteredProjects.length === 0 ? (
+        <div className="text-center py-12 bg-white rounded-lg shadow-sm">
           <CalendarIcon className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">{t('projects.noProjects')}</h3>
-          <p className="mt-1 text-sm text-gray-500">{t('projects.getStarted')}</p>
-          <div className="mt-6">
-            <button onClick={openCreateModal} className="btn-primary">
-              {t('projects.addProject')}
-            </button>
-          </div>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">
+            {searchQuery || filterDate ? (t('common.noResults') || 'No results found') : t('projects.noProjects')}
+          </h3>
+          <p className="mt-1 text-sm text-gray-500">
+            {searchQuery || filterDate ? (t('common.tryDifferentSearch') || 'Try a different search or filter') : t('projects.getStarted')}
+          </p>
+          {!searchQuery && !filterDate && (
+            <div className="mt-6">
+              <button onClick={openCreateModal} className="btn-primary">
+                {t('projects.addProject')}
+              </button>
+            </div>
+          )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => (
-            <div key={project.id} className="card hover:shadow-lg transition-shadow cursor-pointer"
-                 onClick={() => navigate(`/projects/${project.id}`)}>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900">{project.name}</h3>
-                  <p className="mt-1 text-sm text-gray-600 line-clamp-2">{project.description || t('projectDetails.noDescription')}</p>
-                  <div className="mt-3 flex items-center text-sm text-gray-500">
-                    <CalendarIcon className="h-4 w-4 mr-1" />
-                    {new Date(project.date).toLocaleDateString()}
-                  </div>
-                  <p className="mt-2 text-sm text-blue-600">
-                    {project.employee_count || 0} {project.employee_count === 1 ? t('projects.employee') : t('projects.employees')}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4 flex space-x-2">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEdit(project);
-                  }}
-                  className="flex-1 btn-secondary flex items-center justify-center"
-                >
-                  <PencilIcon className="h-4 w-4 mr-1" />
-                  {t('projects.edit')}
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(project.id);
-                  }}
-                  className="flex-1 btn-danger flex items-center justify-center"
-                >
-                  <TrashIcon className="h-4 w-4 mr-1" />
-                  {t('projects.delete')}
-                </button>
-              </div>
-            </div>
-          ))}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('projects.projectName') || 'Project Name'}
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('projects.description') || 'Description'}
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('projects.date') || 'Date'}
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('projects.employees') || 'Employees'}
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('common.actions') || 'Actions'}
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredProjects.map((project) => (
+                  <tr
+                    key={project.id}
+                    className="hover:bg-gray-50 cursor-pointer transition-colors"
+                    onClick={() => navigate(`/projects/${project.id}`)}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{project.name}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-600 max-w-md truncate">
+                        {project.description || t('projectDetails.noDescription')}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center text-sm text-gray-600">
+                        <CalendarIcon className="h-4 w-4 mr-2" />
+                        {new Date(project.date).toLocaleDateString()}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-blue-600 font-medium">
+                        {project.employee_count || 0} {project.employee_count === 1 ? t('projects.employee') : t('projects.employees')}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(project);
+                          }}
+                          className="text-blue-600 hover:text-blue-900 p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                          title={t('projects.edit')}
+                        >
+                          <PencilIcon className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(project.id);
+                          }}
+                          className="text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                          title={t('projects.delete')}
+                        >
+                          <TrashIcon className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
