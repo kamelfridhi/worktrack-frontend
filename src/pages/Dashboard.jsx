@@ -4,9 +4,29 @@ import { useTranslation } from 'react-i18next';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import 'moment/locale/de';
 import api from '../api/axios';
 
+// Ensure German locale for calendar
+moment.locale('de');
 const localizer = momentLocalizer(moment);
+
+// German messages for react-big-calendar
+const messages = {
+  allDay: 'Ganztägig',
+  previous: 'Zurück',
+  next: 'Vor',
+  today: 'Heute',
+  month: 'Monat',
+  week: 'Woche',
+  day: 'Tag',
+  agenda: 'Agenda',
+  date: 'Datum',
+  time: 'Uhrzeit',
+  event: 'Ereignis',
+  noEventsInRange: 'Keine Ereignisse in diesem Zeitraum.',
+  showMore: (total) => `+${total} weitere`,
+};
 
 export default function Dashboard() {
   const [events, setEvents] = useState([]);
@@ -120,6 +140,8 @@ export default function Dashboard() {
             date={currentDate}
             onNavigate={setCurrentDate}
             style={{ height: '100%' }}
+            messages={messages}
+            culture="de"
           />
         </div>
       )}

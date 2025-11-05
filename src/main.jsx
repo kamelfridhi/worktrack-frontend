@@ -4,9 +4,10 @@ import './index.css'
 import './i18n/config'
 import App from './App.jsx'
 import moment from 'moment'
-import 'moment/locale/en-gb'
+import 'moment/locale/de'
 
-moment.locale('en-gb')
+// Set moment to German locale for calendar
+moment.locale('de')
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

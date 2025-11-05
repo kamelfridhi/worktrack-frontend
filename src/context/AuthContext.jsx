@@ -19,7 +19,8 @@ export const AuthProvider = ({ children }) => {
         }
 
         // Try to access a protected endpoint to verify auth
-        const response = await api.get('/employees/');
+        // Use a simple endpoint that doesn't require much data
+        const response = await api.get('/employees/?page=1');
         if (response.status === 200) {
           setIsAuthenticated(true);
         } else {
@@ -27,11 +28,14 @@ export const AuthProvider = ({ children }) => {
           localStorage.removeItem('isAuthenticated');
         }
       } catch (error) {
-        // If 403 or 401, user is not authenticated
-        if (error.response?.status === 403 || error.response?.status === 401) {
+        // Only log out if it's a clear authentication error
+        // Don't log out immediately - give cookies time to be set
+        if (error.response?.status === 401) {
           setIsAuthenticated(false);
           localStorage.removeItem('isAuthenticated');
         }
+        // For 403, it might be CSRF or cookie issue - don't immediately log out
+        // Let the user try to use the app
       } finally {
         setLoading(false);
       }
@@ -39,7 +43,11 @@ export const AuthProvider = ({ children }) => {
 
     const authStatus = localStorage.getItem('isAuthenticated');
     if (authStatus === 'true') {
-      checkAuth();
+      // Add a small delay to allow cookies to be set after login
+      const timer = setTimeout(() => {
+        checkAuth();
+      }, 300);
+      return () => clearTimeout(timer);
     } else {
       // Still fetch CSRF token for login form
       api.get('/login/').catch(() => {});
@@ -71,6 +79,7 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (response.data.success) {
+        // Set authentication state immediately - trust the login response
         setIsAuthenticated(true);
         localStorage.setItem('isAuthenticated', 'true');
 
@@ -80,6 +89,10 @@ export const AuthProvider = ({ children }) => {
         } catch (e) {
           // Ignore - we just need CSRF cookie to be set
         }
+
+        // Don't immediately verify - let the user navigate and verify naturally
+        // This prevents immediate logout if cookies need a moment to propagate
+        setLoading(false);
 
         return { success: true };
       } else {
