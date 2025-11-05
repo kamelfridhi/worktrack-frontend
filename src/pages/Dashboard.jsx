@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
@@ -7,9 +7,8 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'moment/locale/de';
 import api from '../api/axios';
 
-// Ensure German locale for calendar
+// Ensure German locale for calendar globally
 moment.locale('de');
-const localizer = momentLocalizer(moment);
 
 // German messages for react-big-calendar
 const messages = {
@@ -35,11 +34,64 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  useEffect(() => {
-    fetchProjects();
-  }, [currentDate]);
+  // Create localizer with German locale - ensure moment locale is set before creating localizer
+  const localizer = useMemo(() => {
+    // Set German locale globally for moment BEFORE creating localizer
+    moment.locale('de');
+    // Create localizer - it will use moment's current locale (German)
+    const baseLocalizer = momentLocalizer(moment);
 
-  const fetchProjects = async () => {
+    // Wrap the localizer to ensure German locale is always used for formatting
+    return {
+      ...baseLocalizer,
+      // Override format to ensure German locale
+      format: (date, formatString) => {
+        if (typeof formatString === 'string') {
+          return moment(date).locale('de').format(formatString);
+        }
+        // Fallback to base localizer if format is not a string
+        return baseLocalizer.format(date, formatString);
+      },
+    };
+  }, []);
+
+  // German formats for calendar - ensure moment uses German locale explicitly
+  const formats = useMemo(() => {
+    // Force German locale for all format functions
+    moment.locale('de');
+    return {
+      weekdayFormat: (date) => {
+        // Get moment instance with German locale
+        const m = moment(date).locale('de');
+        // Use moment's weekdaysMin which returns German abbreviated day names: So, Mo, Di, Mi, Do, Fr, Sa
+        const weekdaysMin = m.localeData('de').weekdaysMin();
+        const dayOfWeek = m.day();
+        return weekdaysMin[dayOfWeek];
+      },
+      monthHeaderFormat: (date) => {
+        return moment(date).locale('de').format('MMMM YYYY');
+      },
+      dayHeaderFormat: (date) => {
+        return moment(date).locale('de').format('dddd, D. MMMM');
+      },
+      dayRangeHeaderFormat: ({ start, end }) => {
+        return `${moment(start).locale('de').format('D. MMMM')} - ${moment(end).locale('de').format('D. MMMM YYYY')}`;
+      },
+      dayFormat: (date) => {
+        return moment(date).locale('de').format('D');
+      },
+      eventTimeRangeFormat: ({ start, end }) => {
+        return `${moment(start).locale('de').format('HH:mm')} - ${moment(end).locale('de').format('HH:mm')}`;
+      },
+    };
+  }, []);
+
+  // Ensure moment locale is set to German when component mounts
+  useEffect(() => {
+    moment.locale('de');
+  }, []);
+
+  const fetchProjects = useCallback(async () => {
     try {
       setLoading(true);
       const month = currentDate.getMonth() + 1;
@@ -61,7 +113,11 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentDate]);
+
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
 
   const handleSelectEvent = (event) => {
     navigate(`/projects/${event.resource.id}`);
@@ -141,6 +197,7 @@ export default function Dashboard() {
             onNavigate={setCurrentDate}
             style={{ height: '100%' }}
             messages={messages}
+            formats={formats}
             culture="de"
           />
         </div>

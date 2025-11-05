@@ -42,3 +42,95 @@
     @apply block text-sm font-medium text-gray-700 mb-1;
   }
 }
+
+/* Override react-big-calendar weekday names to German using CSS */
+.rbc-header {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Completely hide original English text */
+.rbc-header > * {
+  visibility: hidden;
+  font-size: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+/* Replace English weekday abbreviations with German */
+.rbc-header:nth-child(1)::after {
+  content: 'So';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.875rem;
+  font-weight: 600;
+  visibility: visible;
+}
+
+.rbc-header:nth-child(2)::after {
+  content: 'Mo';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.875rem;
+  font-weight: 600;
+  visibility: visible;
+}
+
+.rbc-header:nth-child(3)::after {
+  content: 'Di';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.875rem;
+  font-weight: 600;
+  visibility: visible;
+}
+
+.rbc-header:nth-child(4)::after {
+  content: 'Mi';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.875rem;
+  font-weight: 600;
+  visibility: visible;
+}
+
+.rbc-header:nth-child(5)::after {
+  content: 'Do';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.875rem;
+  font-weight: 600;
+  visibility: visible;
+}
+
+.rbc-header:nth-child(6)::after {
+  content: 'Fr';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.875rem;
+  font-weight: 600;
+  visibility: visible;
+}
+
+.rbc-header:nth-child(7)::after {
+  content: 'Sa';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.875rem;
+  font-weight: 600;
+  visibility: visible;
+}
