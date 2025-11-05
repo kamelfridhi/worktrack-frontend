@@ -1,19 +1,16 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../context/AuthContext';
 import LanguageSwitcher from './LanguageSwitcher';
 import {
   HomeIcon,
   FolderIcon,
   UserGroupIcon,
   DocumentChartBarIcon,
-  ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline';
 
 export default function Sidebar() {
   const location = useLocation();
   const { t } = useTranslation();
-  const { logout, isAuthenticated } = useAuth();
 
   const navigation = [
     { name: t('sidebar.dashboard'), href: '/dashboard', icon: HomeIcon },
@@ -55,18 +52,9 @@ export default function Sidebar() {
                 );
               })}
             </nav>
-            {isAuthenticated && (
-              <div className="px-2 pb-4 border-t border-gray-200 pt-4 space-y-3">
-                <LanguageSwitcher />
-                <button
-                  onClick={logout}
-                  className="w-full flex items-center space-x-2 text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-gray-50"
-                >
-                  <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                  <span>{t('navbar.logout')}</span>
-                </button>
-              </div>
-            )}
+            <div className="px-2 pb-4 border-t border-gray-200 pt-4 space-y-3">
+              <LanguageSwitcher />
+            </div>
           </div>
         </div>
       </div>

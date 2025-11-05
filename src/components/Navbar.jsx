@@ -1,17 +1,10 @@
 import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './LanguageSwitcher';
-import { ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 import logozeen from '../assets/logozeen.png';
 
 export default function Navbar() {
-  const { isAuthenticated, logout } = useAuth();
   const { t } = useTranslation();
-
-  if (!isAuthenticated) {
-    return null;
-  }
 
   return (
     <nav className="bg-white shadow-md border-b border-gray-200">
@@ -24,16 +17,9 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Mobile: Language and Logout */}
+          {/* Mobile: Language */}
           <div className="md:hidden flex items-center space-x-3">
             <LanguageSwitcher />
-            <button
-              onClick={logout}
-              className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 px-2 py-1 rounded-md text-sm font-medium transition-colors hover:bg-gray-50"
-              title={t('navbar.logout')}
-            >
-              <ArrowRightOnRectangleIcon className="h-5 w-5" />
-            </button>
           </div>
 
           {/* Desktop: Nothing here (handled by Sidebar) */}

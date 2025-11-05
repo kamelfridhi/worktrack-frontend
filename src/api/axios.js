@@ -42,21 +42,15 @@ async function ensureCsrfToken() {
     }
 
     try {
-      // Try to get CSRF token from API login endpoint (GET request)
-      const response = await api.get('/login/');
-      token = response.data.csrf_token || getCookie('csrftoken');
-    } catch (error) {
-      // If that fails, try the admin login page endpoint
-      try {
-        const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:8000';
-        await fetch(`${baseUrl}/admin/login/`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-        token = getCookie('csrftoken');
-      } catch (e) {
-        console.warn('Could not fetch CSRF token:', e);
-      }
+      // Try to get CSRF token from Django admin login page endpoint
+      const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:8000';
+      await fetch(`${baseUrl}/admin/login/`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      token = getCookie('csrftoken');
+    } catch (e) {
+      console.warn('Could not fetch CSRF token:', e);
     }
 
     return token;
@@ -107,12 +101,16 @@ api.interceptors.response.use(
     if (error.response?.status === 403) {
       const errorDetail = error.response?.data?.detail || '';
 
-      // If it's a CSRF error (not an auth credentials error), try to get token and retry
+      // If it's a CSRF error, try to get token and retry
       if (errorDetail.includes('CSRF')) {
         try {
-          // Fetch CSRF token from login endpoint
-          const response = await api.get('/login/');
-          const csrfToken = response.data.csrf_token || getCookie('csrftoken');
+          // Fetch CSRF token from Django admin login page
+          const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:8000';
+          await fetch(`${baseUrl}/admin/login/`, {
+            method: 'GET',
+            credentials: 'include',
+          });
+          const csrfToken = getCookie('csrftoken');
 
           // Retry the original request with CSRF token
           if (csrfToken && error.config) {
@@ -122,25 +120,6 @@ api.interceptors.response.use(
         } catch (retryError) {
           console.error('Failed to retry request:', retryError);
         }
-      }
-
-      // If it's an authentication credentials error, the session cookie might not be set
-      // This usually means the user needs to log in again
-      if (errorDetail.includes('Authentication credentials') || errorDetail.includes('credentials')) {
-        console.warn('Session cookie not found or invalid. User may need to log in again.');
-        // Clear auth state and redirect to login if not already there
-        localStorage.removeItem('isAuthenticated');
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login';
-        }
-      }
-    }
-
-    // Handle 401 Unauthorized
-    if (error.response?.status === 401) {
-      localStorage.removeItem('isAuthenticated');
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
       }
     }
 
