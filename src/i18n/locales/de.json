@@ -106,7 +106,9 @@
     "viewProject": "Projekt anzeigen",
     "unauthorized": "Sie sind nicht berechtigt, diesen Bericht herunterzuladen. Bitte melden Sie sich erneut an.",
     "downloadError": "Fehler beim Herunterladen der PDF. Bitte versuchen Sie es erneut.",
-    "hours": "Stunden"
+    "hours": "Stunden",
+    "summary": "Zusammenfassung",
+    "noProjectsForMonth": "Keine Projekte für {{month}} {{year}} gefunden"
   },
   "reports": {
     "title": "Berichte & Statistiken",
@@ -134,7 +136,17 @@
     "close": "Schließen",
     "confirm": "Sind Sie sicher?",
     "yes": "Ja",
-    "no": "Nein"
+    "no": "Nein",
+    "search": "Suchen",
+    "allRoles": "Alle Rollen",
+    "clear": "Löschen",
+    "showing": "Anzeigen",
+    "of": "von",
+    "noResults": "Keine Ergebnisse gefunden",
+    "tryDifferentSearch": "Versuchen Sie eine andere Suche oder einen anderen Filter",
+    "actions": "Aktionen",
+    "optional": "Optional",
+    "allMonths": "Alle Monate"
   },
   "months": {
     "1": "Januar",
